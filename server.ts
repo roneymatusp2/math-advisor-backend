@@ -1,12 +1,12 @@
 // server.ts
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import fetch from 'node-fetch'; // Use node-fetch in the backend
+import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 import validator from 'validator';
 
-dotenv.config(); // Load environment variables from .env
+dotenv.config(); // Load environment variables
 
 interface MathResults {
     course: string;
@@ -27,19 +27,21 @@ const app = express();
 
 // Middlewares
 app.use(express.json()); // Parse JSON request bodies
-app.use(cors());       // Enable CORS for all origins (for development)
-app.use(morgan('dev')); // Log requests in development mode
+// Allow requests from any origin.  This is fine for development, but for
+// production, you should restrict this to your frontend's URL.
+app.use(cors());
+app.use(morgan('dev')); // Log requests to the console (for debugging)
 
-// --- Environment Variable Handling (CRITICAL) ---
+// --- Environment Variables (CRITICAL) ---
 const MAILERSEND_API_KEY = process.env.MAILERSEND_API_KEY;
 const MAILERSEND_FROM_EMAIL = process.env.MAILERSEND_FROM_EMAIL;
 
 if (!MAILERSEND_API_KEY || !MAILERSEND_FROM_EMAIL) {
     console.error('❌ ERROR: MailerSend API key or fromEmail not set in environment variables!');
-    process.exit(1); // Exit the process if variables are missing
+    process.exit(1); // Stop the server if these are missing
 }
 
-// Health check endpoint
+// Health check endpoint (good for testing)
 app.get('/api/health', (req: Request, res: Response) => {
     res.json({ status: 'OK', message: 'Server is running!' });
 });
@@ -69,7 +71,7 @@ app.post('/api/sendEmail', async (req: Request, res: Response) => {
                 <html>
                     <head>
                         <style>
-                            /* ... (Your CSS styles here) ... */
+                            /* Your CSS styles here (from previous examples) */
                             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;}
                             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
                             .header { background: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
@@ -113,33 +115,33 @@ app.post('/api/sendEmail', async (req: Request, res: Response) => {
             `,
         };
 
-        // --- Send Email via MailerSend (using node-fetch) ---
+        // --- Send Email via MailerSend ---
         const mailResponse = await fetch('https://api.mailersend.com/v1/email', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${MAILERSEND_API_KEY}`,
                 'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest', // Sometimes helpful for CORS
+                'X-Requested-With': 'XMLHttpRequest', // Good practice for CORS
             },
             body: JSON.stringify(mailData),
         });
 
         // --- Handle MailerSend Response ---
         if (!mailResponse.ok) {
-            const errorData = await mailResponse.json(); // Parse error response
-            console.error('❌ MailerSend Error:', mailResponse.status, errorData); // Log detailed error
+            const errorData = await mailResponse.json(); // Get error details
+            console.error('❌ MailerSend Error:', mailResponse.status, errorData);
             return res.status(mailResponse.status).json({
                 error: 'Failed to send email via MailerSend',
                 details: errorData, // Include MailerSend's error details
             });
         }
 
-        const mailResult = await mailResponse.json(); // Parse success response
+        const mailResult = await mailResponse.json();
         console.log('✅ Email sent successfully:', mailResult);
-        return res.status(200).json({ success: true, message: 'Email sent successfully!' }); // Clear success message
+        return res.status(200).json({ success: true, message: 'Email sent successfully!' });
 
     } catch (error: any) {
-        console.error('❌ General Error:', error); // Log any unexpected errors
+        console.error('❌ General Error:', error);
         return res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
