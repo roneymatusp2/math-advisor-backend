@@ -1,30 +1,38 @@
-# Temporarily ignore frontend files for backend deployment
-public/
-src/App.tsx
-src/components/
-src/data/
-src/index.css
-src/main.tsx
-src/vite-env.d.ts
-tsconfig.app.json
-tsconfig.node.json
-vite.config.ts
-index.html
-eslint.config.js
-package-lock.json
-.bolt/
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
+# Build output
+dist/
+build/
+coverage/
 
-# Ignore EVERYTHING by default
-/*
+# Environment variables
+.env*
+!.env.example
 
-# But explicitly allow these backend files:
-!/server.ts
-!/package.json
-!/postcss.config.cjs
-!/tailwind.config.js
-!/tsconfig.json
-!/src/services/EmailService.ts
-!/src/utils/calculateResults.ts
-!/.github/
-!/.gitignore
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Editor/IDE specific
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.bak
+
+# Logs
+logs/
+*.log
