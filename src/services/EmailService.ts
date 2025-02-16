@@ -1,5 +1,3 @@
-import Mailgun from 'mailgun-js';
-
 interface MathResults {
     course: string;
     level: string;
@@ -15,149 +13,145 @@ interface MathResults {
     }
 }
 
-/**
- * Service for sending emails using Mailgun
- */
-export default class EmailService {
-    private readonly mailgunClient: Mailgun.Mailgun;
+class EmailService {
+    private apiKey: string;
+    private baseUrl: string = 'https://api.mailersend.com/v1';
+    private fromEmail: string;
 
     constructor() {
-        const apiKey = process.env.MAILGUN_API_KEY;
-        const domain = process.env.MAILGUN_DOMAIN;
+        this.apiKey = import.meta.env.VITE_MAILERSEND_API_KEY;
+        this.fromEmail = import.meta.env.VITE_MAILERSEND_FROM_EMAIL;
 
-        if (!apiKey) {
-            throw new Error('MAILGUN_API_KEY environment variable is required');
-        }
-        if (!domain) {
-            throw new Error('MAILGUN_DOMAIN environment variable is required');
-        }
-
-        this.mailgunClient = Mailgun({
-            apiKey,
-            domain
-        });
-    }
-
-    private validateEmail(email: string): void {
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            throw new Error('Invalid email address');
+        if (!this.apiKey || !this.fromEmail) {
+            console.error('Missing required MailerSend configuration. Check your environment variables.');
         }
     }
 
-    private validateResults(results: MathResults): void {
-        if (!results.course || !results.level || !results.details) {
-            throw new Error('Missing required results fields');
-        }
-
-        if (results.courseConfidence < 0 || results.courseConfidence > 100 ||
-            results.levelConfidence < 0 || results.levelConfidence > 100 ||
-            results.overallConfidence < 0 || results.overallConfidence > 100) {
-            throw new Error('Confidence values must be between 0 and 100');
-        }
-
-        if (!results.details.focus || !results.details.style || !results.details.advice) {
-            throw new Error('Missing required details fields');
-        }
-    }
-
-    async sendMathResults(email: string, results: MathResults): Promise<Mailgun.messages.SendResponse> {
+    async sendMathResults(email: string, results: MathResults) {
         try {
-            this.validateEmail(email);
-            this.validateResults(results);
-
-            const domain = process.env.MAILGUN_DOMAIN;
-            if (!domain) {
-                throw new Error('MAILGUN_DOMAIN environment variable is required');
-            }
-
-            const html = `
-                <html>
-                    <head>
-                        <style>
-                            body { 
-                                font-family: Arial, sans-serif; 
-                                line-height: 1.6; 
-                                color: #333;
-                                margin: 0;
-                                padding: 0;
-                            }
-                            .container { 
-                                max-width: 600px; 
-                                margin: 0 auto; 
-                                padding: 20px; 
-                            }
-                            .header { 
-                                background: #4F46E5; 
-                                color: white; 
-                                padding: 20px; 
-                                text-align: center; 
-                                border-radius: 8px 8px 0 0;
-                            }
-                            .content { 
-                                background: #f9fafb; 
-                                padding: 20px; 
-                                border-radius: 0 0 8px 8px;
-                            }
-                            .result-box { 
-                                background: white; 
-                                padding: 15px; 
-                                margin: 10px 0; 
-                                border-radius: 5px;
-                                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                            }
-                            .confidence { 
-                                color: #4F46E5; 
-                                font-weight: bold; 
-                            }
-                            .alert {
-                                background: #FEF2F2;
-                                color: #991B1B;
-                                padding: 10px;
-                                border-radius: 5px;
-                                margin-top: 10px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <div class="header">
-                                <h1>Your IB Math Results</h1>
-                            </div>
-                            <div class="content">
-                                <div class="result-box">
-                                    <h2>Final Recommendation: ${results.course} (${results.level})</h2>
-                                    <p class="confidence">
-                                        Course Confidence: ${results.courseConfidence}%<br/>
-                                        Level Confidence: ${results.levelConfidence}%<br/>
-                                        Overall Confidence: ${results.overallConfidence}%
-                                    </p>
+            const emailData = {
+                from: {
+                    email: this.fromEmail,
+                    name: "IB Math Advisor"
+                },
+                to: [
+                    {
+                        email: email,
+                        name: email.split('@')[0]
+                    }
+                ],
+                subject: "Your IB Math Course Recommendation",
+                html: `
+                    <html>
+                        <head>
+                            <style>
+                                body { 
+                                    font-family: Arial, sans-serif; 
+                                    line-height: 1.6; 
+                                    color: #333;
+                                    margin: 0;
+                                    padding: 0;
+                                }
+                                .container { 
+                                    max-width: 600px; 
+                                    margin: 0 auto; 
+                                    padding: 20px; 
+                                }
+                                .header { 
+                                    background: #4F46E5; 
+                                    color: white; 
+                                    padding: 20px; 
+                                    text-align: center; 
+                                    border-radius: 8px 8px 0 0;
+                                }
+                                .content { 
+                                    background: #f9fafb; 
+                                    padding: 20px; 
+                                    border-radius: 0 0 8px 8px;
+                                }
+                                .result-box { 
+                                    background: white; 
+                                    padding: 15px; 
+                                    margin: 10px 0; 
+                                    border-radius: 5px;
+                                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                                }
+                                .confidence { 
+                                    color: #4F46E5; 
+                                    font-weight: bold; 
+                                }
+                                .alert {
+                                    background: #FEF2F2;
+                                    color: #991B1B;
+                                    padding: 10px;
+                                    border-radius: 5px;
+                                    margin-top: 10px;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <div class="header">
+                                    <h1>Your IB Math Results</h1>
                                 </div>
-                                <div class="result-box">
-                                    <h3>Detailed Analysis</h3>
-                                    <p><strong>Focus:</strong> ${results.details.focus}</p>
-                                    <p><strong>Learning Style:</strong> ${results.details.style}</p>
-                                    <p><strong>Advice:</strong> ${results.details.advice}</p>
-                                    ${results.details.borderline ?
-                `<p class="alert">Note: This recommendation is borderline. Consider discussing with your teacher.</p>`
-                : ''}
+                                <div class="content">
+                                    <div class="result-box">
+                                        <h2>Course Recommendation</h2>
+                                        <p>Based on your responses, we recommend:</p>
+                                        <p><strong>Mathematics: ${results.course === 'AA' ? 'Analysis & Approaches' :
+                    results.course === 'AI' ? 'Applications & Interpretation' :
+                        'AA or AI (Tie)'}</strong></p>
+                                        <p><strong>Level: ${results.level === 'HL' ? 'Higher Level' :
+                    results.level === 'SL' ? 'Standard Level' :
+                        'HL or SL (Tie)'}</strong></p>
+                                        <p class="confidence">Confidence Level: ${Math.round(results.overallConfidence * 100)}%</p>
+                                    </div>
+
+                                    <div class="result-box">
+                                        <h2>Analysis Details</h2>
+                                        <h3>Learning Focus</h3>
+                                        <p>${results.details.focus}</p>
+                                        <h3>Learning Style</h3>
+                                        <p>${results.details.style}</p>
+                                        <h3>Recommendations</h3>
+                                        <p>${results.details.advice}</p>
+                                    </div>
+
+                                    ${results.details.borderline ? `
+                                        <div class="alert">
+                                            <p><strong>Note:</strong> Your results indicate you're on the borderline between levels or courses. 
+                                            Consider discussing these results with your math teacher to make the best choice.</p>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             </div>
-                        </div>
-                    </body>
-                </html>
-            `;
-
-            const data = {
-                from: `IB Math Advisor <mailgun@${domain}>`,
-                to: email,
-                subject: 'Your IB Math Course Recommendation',
-                html: html
+                        </body>
+                    </html>
+                `
             };
 
-            return await this.mailgunClient.messages().send(data);
-        } catch (error: unknown) {
+            const response = await fetch(`${this.baseUrl}/email`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(emailData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Email send failed:', errorData);
+                throw new Error(`Email send failed: ${response.statusText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
             console.error('Error sending email:', error);
             throw error;
         }
     }
 }
+
+const emailService = new EmailService();
+export default emailService;
