@@ -1,28 +1,16 @@
-# Node.js
 node_modules/
+.env
+dist/
+build/
+.DS_Store
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-# Build output
-dist/
-build/
-coverage/
-
-# Environment variables
-.env*
-!.env.example
-
-# macOS
-.DS_Store
-
-# Windows
-Thumbs.db
-Desktop.ini
-
-# Editor/IDE specific
+*.local
 .vscode/
 !.vscode/extensions.json
 .idea/
@@ -32,7 +20,4 @@ Desktop.ini
 *.sln
 *.sw?
 *.bak
-
-# Logs
-logs/
-*.log
+coverage/
